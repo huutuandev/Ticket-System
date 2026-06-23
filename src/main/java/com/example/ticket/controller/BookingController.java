@@ -18,8 +18,26 @@ public class BookingController {
 
     private final BookingService bookingService;
 
-    @PostMapping
-    public ResponseEntity<BookingResponse> bookingSeats(@RequestBody @Valid CreateBookingRequest request){
-        return ResponseEntity.ok(bookingService.createBooking(request));
+    // 🔹 Optimistic Locking
+    @PostMapping("/optimistic")
+    public ResponseEntity<BookingResponse> bookingSeatsOptimistic(
+            @RequestBody @Valid CreateBookingRequest request
+    ) throws InterruptedException {
+
+        return ResponseEntity.ok(
+                bookingService.createBookingOptimistic(request)
+        );
+    }
+
+    // 🔹 Pessimistic Locking
+    @PostMapping("/pessimistic")
+    public ResponseEntity<BookingResponse> bookingSeatsPessimistic(
+            @RequestBody @Valid CreateBookingRequest request
+    ) throws InterruptedException {
+
+        return ResponseEntity.ok(
+                bookingService.createBookingPessimistic(request)
+        );
     }
 }
+

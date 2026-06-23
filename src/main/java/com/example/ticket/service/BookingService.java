@@ -9,6 +9,7 @@ import com.example.ticket.entity.Seat;
 import com.example.ticket.entity.User;
 import com.example.ticket.enums.BookingStatus;
 import com.example.ticket.enums.SeatStatus;
+import com.example.ticket.exception.SeatUnavailableException;
 import com.example.ticket.repository.BookingRepository;
 import com.example.ticket.repository.BookingSeatRepository;
 import com.example.ticket.repository.SeatRepository;
@@ -33,55 +34,77 @@ public class BookingService {
     private final SeatRepository seatRepo;
 
     @Transactional
-    public BookingResponse createBooking(CreateBookingRequest bookingRequest){
+    public BookingResponse createBookingOptimistic(CreateBookingRequest bookingRequest) {
 
-        User user =  userRepo.findById(bookingRequest.getUserId())
-                .orElseThrow(()-> new UsernameNotFoundException("Không tìm thấy user"));
+        User user = userRepo.findById(bookingRequest.getUserId())
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user"));
 
+        List<Long> sortedIds = bookingRequest.getSeatIds()
+                .stream()
+                .sorted()
+                .toList();
 
-        List<Seat> seats =
-                seatRepo.findAllById(bookingRequest.getSeatIds());
-
+        List<Seat> seats = seatRepo.findAllById(sortedIds);
 
         for (Seat seat : seats) {
-
             if (seat.getStatus() != SeatStatus.AVAILABLE) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "Seat unavailable"
-                );
+                throw new SeatUnavailableException("Seat already booked");
             }
-
             seat.setStatus(SeatStatus.BOOKED);
         }
+
+        return saveBooking(user, seats);
+    }
+
+    @Transactional
+    public BookingResponse createBookingPessimistic(CreateBookingRequest bookingRequest)
+            throws InterruptedException {
+
+        User user = userRepo.findById(bookingRequest.getUserId())
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user"));
+
+        List<Long> sortedIds = bookingRequest.getSeatIds()
+                .stream()
+                .sorted()
+                .toList();
+
+        List<Seat> seats = seatRepo.findAllByIdForUpdate(sortedIds);
+
+        // để test concurrency
+        Thread.sleep(3000);
+
+        for (Seat seat : seats) {
+            if (seat.getStatus() != SeatStatus.AVAILABLE) {
+                throw new SeatUnavailableException("Seat already booked");
+            }
+            seat.setStatus(SeatStatus.BOOKED);
+        }
+
+        return saveBooking(user, seats);
+    }
+
+
+
+    private BookingResponse saveBooking(User user, List<Seat> seats) {
 
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setStatus(BookingStatus.PAID);
         booking.setBookingDate(LocalDateTime.now());
-        BigDecimal totalAmount =
-                seats.stream()
-                        .map(Seat::getPrice)
-                        .reduce(BigDecimal.ZERO,
-                                BigDecimal::add);
+
+        BigDecimal totalAmount = seats.stream()
+                .map(Seat::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         booking.setTotalAmount(totalAmount);
         bookingRepo.save(booking);
 
         for (Seat seat : seats) {
-
-            BookingSeat bookingSeat =
-                    new BookingSeat();
-
+            BookingSeat bookingSeat = new BookingSeat();
             bookingSeat.setBooking(booking);
-
             bookingSeat.setSeat(seat);
-
             bookingSeat.setPrice(seat.getPrice());
-
             bookingSeatRepo.save(bookingSeat);
-
-            seat.setStatus(SeatStatus.BOOKED);
         }
 
         return BookingResponse.builder()

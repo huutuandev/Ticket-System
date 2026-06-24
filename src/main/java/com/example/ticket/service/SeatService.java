@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -102,6 +103,7 @@ public class SeatService {
         }
 
         List<String> lockedKeys = new ArrayList<>();
+        LocalDateTime expireTime = LocalDateTime.now().plusMinutes(5);
 
         try {
             for (Seat seat : seats) {
@@ -110,6 +112,9 @@ public class SeatService {
                     throw new SeatUnavailableException("Seat not available: " + seat.getId());
                 }
 
+                seat.setStatus(SeatStatus.HOLD);
+                seat.setHoldByUserId(userId);
+                seat.setHoldExpiresAt(expireTime);
 
                 String key = SEAT_HOLD_KEY_PREFIX + seat.getId();
 
@@ -125,6 +130,7 @@ public class SeatService {
 
                 lockedKeys.add(key);
             }
+            seatRepo.saveAll(seats);
 
         } catch (Exception e) {
 

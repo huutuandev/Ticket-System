@@ -8,6 +8,7 @@ import lombok.*;
 
 import javax.print.attribute.standard.MediaSize;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,6 +41,10 @@ public class Seat {
 
     @Version
     private Long version;
+
+
+    private LocalDateTime holdExpiresAt;
+    private Long holdByUserId;
 
 
     @ManyToOne(fetch = FetchType.LAZY)

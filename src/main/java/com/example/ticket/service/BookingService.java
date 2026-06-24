@@ -10,10 +10,7 @@ import com.example.ticket.entity.Seat;
 import com.example.ticket.entity.User;
 import com.example.ticket.enums.BookingStatus;
 import com.example.ticket.enums.SeatStatus;
-import com.example.ticket.exception.SeatHeldByOtherUserException;
-import com.example.ticket.exception.SeatHoldExpiredException;
-import com.example.ticket.exception.SeatNotHeldException;
-import com.example.ticket.exception.SeatUnavailableException;
+import com.example.ticket.exception.*;
 import com.example.ticket.repository.BookingRepository;
 import com.example.ticket.repository.BookingSeatRepository;
 import com.example.ticket.repository.SeatRepository;
@@ -31,6 +28,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -50,30 +48,40 @@ public class BookingService {
 
         List<Long> seatIds = request.getSeatIds();
 
+        LocalDateTime now =  LocalDateTime.now();
+
         List<String> keysToDelete = new ArrayList<>();
 
-        for (Long seatId : seatIds) {
+        List<Seat> seats = seatRepo.findAllById(seatIds);
+        if (seats.size() != seatIds.size()) {
+            throw new ResourceNotFoundException("Some seats not found");
+        }
 
-            String key = SEAT_HOLD_KEY_PREFIX + seatId;
+        for (Seat seat : seats) {
+            String key = SEAT_HOLD_KEY_PREFIX + seat.getId();
+            Object redisHolder = redisTemplate.opsForValue().get(key);
 
-            Object holder = redisTemplate.opsForValue().get(key);
-
-            Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
-
-            if (holder == null) {
-
-                if (ttl != null && ttl == -2) {
-                    throw new SeatHoldExpiredException("Hold expired for seat: " + seatId);
+            if (redisHolder != null) {
+                if (!redisHolder.toString().equals(userId.toString())) {
+                    throw new SeatHeldByOtherUserException("Seat held by another user: " + seat.getId());
                 }
+                keysToDelete.add(key);
+            }
+            else {
+                if (seat.getStatus() != SeatStatus.HOLD
+                        || !Objects.equals(seat.getHoldByUserId(), userId)
+                        || seat.getHoldExpiresAt() == null
+                        || seat.getHoldExpiresAt().isBefore(now)) {
 
-                throw new SeatNotHeldException("Seat not held: " + seatId);
+                    throw new SeatHoldExpiredException("Hold expired or invalid for seat: " + seat.getId());
+                }
+                keysToDelete.add(key);
             }
 
-            if (!holder.toString().equals(userId.toString())) {
-                throw new SeatHeldByOtherUserException("Seat held by another user: " + seatId);
+            // Final safety check
+            if (seat.getStatus() != SeatStatus.HOLD) {
+                throw new SeatUnavailableException("Seat is not in HOLD state: " + seat.getId());
             }
-
-            keysToDelete.add(key);
         }
 
         BookingResponse response = createBookingOptimistic(
@@ -99,10 +107,14 @@ public class BookingService {
         List<Seat> seats = seatRepo.findAllById(sortedIds);
 
         for (Seat seat : seats) {
-            if (seat.getStatus() != SeatStatus.AVAILABLE) {
-                throw new SeatUnavailableException("Seat already booked");
+            if (seat.getStatus() != SeatStatus.HOLD) {
+                throw new SeatUnavailableException(
+                        "Seat is not in HOLD state: " + seat.getId()
+                );
             }
             seat.setStatus(SeatStatus.BOOKED);
+            seat.setHoldByUserId(null);
+            seat.setHoldExpiresAt(null);
         }
 
         return saveBooking(user, seats);

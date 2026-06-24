@@ -5,6 +5,7 @@ import com.example.ticket.dto.response.ConcertResponse;
 import com.example.ticket.entity.Concert;
 import com.example.ticket.repository.ConcertRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class ConcertService {
         return page.map(this::toResponse);
     }
 
+    @Cacheable(value = "concert", key = "#id")
     public ConcertResponse getConcertById(Long id){
         Concert concert = concertRepo.findById(id)
                 .orElseThrow(()-> new RuntimeException("không tìm thấy concert "+id));

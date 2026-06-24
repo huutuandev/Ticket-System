@@ -15,6 +15,10 @@ import com.example.ticket.exception.SeatUnavailableException;
 import com.example.ticket.repository.ConcertRepository;
 import com.example.ticket.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,9 +36,12 @@ public class SeatService {
     private final ConcertRepository concertRepo;
     private final SeatRepository seatRepo;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final CacheManager cacheManager;
     private static final String SEAT_HOLD_KEY_PREFIX = "hold:seat:";
+    private static final String SEAT_CACHE = "concert-seats";
 
 
+    @CacheEvict(value = SEAT_CACHE, key = "#concertId")
     @Transactional
     public List<SeatResponse> generateSeats(GenerateSeatsRequest request, Long concertId){
 
@@ -82,7 +89,9 @@ public class SeatService {
 
     }
 
-    public List<SeatResponse> getSeatsByConcert(Long concertId){
+    @Cacheable(value = "concert-seats", key = "#concertId")
+    public List<SeatResponse> getSeatsByConcert(Long concertId) {
+        System.out.println("🔥 DB HIT");
         List<Seat> seats = seatRepo.findByConcertId(concertId);
         return seats.stream()
                 .map(this::toResponse)
@@ -101,6 +110,7 @@ public class SeatService {
         if(seats.size() != request.getSeatIds().size()){
             throw new ResourceNotFoundException("Seat not found");
         }
+        Long concertId = seats.get(0).getConcert().getId();
 
         List<String> lockedKeys = new ArrayList<>();
         LocalDateTime expireTime = LocalDateTime.now().plusMinutes(5);
@@ -131,6 +141,14 @@ public class SeatService {
                 lockedKeys.add(key);
             }
             seatRepo.saveAll(seats);
+
+            if (concertId != null) {
+                Cache cache = cacheManager.getCache("concert-seats");
+                if (cache != null) {
+                    cache.evict(concertId);
+//                log.info("Cache evicted for concertId: {}", concertId);
+                }
+            }
 
         } catch (Exception e) {
 

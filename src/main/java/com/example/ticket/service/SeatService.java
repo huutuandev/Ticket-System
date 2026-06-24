@@ -2,18 +2,23 @@ package com.example.ticket.service;
 
 
 import com.example.ticket.dto.request.GenerateSeatsRequest;
+import com.example.ticket.dto.request.HoldSeatRequest;
 import com.example.ticket.dto.response.SeatResponse;
 import com.example.ticket.entity.Concert;
 import com.example.ticket.entity.Seat;
 import com.example.ticket.enums.SeatStatus;
 import com.example.ticket.enums.SeatType;
+import com.example.ticket.exception.SeatAlreadyHeldException;
+import com.example.ticket.exception.SeatUnavailableException;
 import com.example.ticket.repository.ConcertRepository;
 import com.example.ticket.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +27,8 @@ import java.util.List;
 public class SeatService {
     private final ConcertRepository concertRepo;
     private final SeatRepository seatRepo;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private static final String SEAT_HOLD_KEY_PREFIX = "hold:seat:";
 
 
     @Transactional
@@ -77,6 +84,52 @@ public class SeatService {
                 .map(this::toResponse)
                 .toList();
     }
+
+
+    @Transactional
+    public void holdSeats(HoldSeatRequest request) {
+
+        Long userId = request.getUserId();
+
+        List<Seat> seats = seatRepo.findAllById(request.getSeatIds());
+
+        List<String> lockedKeys = new ArrayList<>();
+
+        try {
+            for (Seat seat : seats) {
+
+                if (seat.getStatus() != SeatStatus.AVAILABLE) {
+                    throw new SeatUnavailableException("Seat not available: " + seat.getId());
+                }
+
+                String key = SEAT_HOLD_KEY_PREFIX + seat.getId();
+
+                Boolean success = redisTemplate.opsForValue().setIfAbsent(
+                        key,
+                        userId,
+                        Duration.ofMinutes(5)
+                );
+
+                if (Boolean.FALSE.equals(success)) {
+                    throw new SeatAlreadyHeldException("Seat already held: " + seat.getId());
+                }
+
+                lockedKeys.add(key);
+            }
+
+        } catch (Exception e) {
+
+            // rollback Redis locks
+            for (String key : lockedKeys) {
+                redisTemplate.delete(key);
+            }
+
+            throw e;
+        }
+    }
+
+
+
 
     private SeatResponse toResponse(Seat seat){
         SeatResponse response = new SeatResponse();

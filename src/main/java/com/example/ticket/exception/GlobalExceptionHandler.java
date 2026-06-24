@@ -76,8 +76,57 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(409).body(e.getMessage());
     }
 
-    @ExceptionHandler(SeatUnavailableException.class)
-    public ResponseEntity<String> handleUnavailable(Exception e) {
-        return ResponseEntity.status(400).body(e.getMessage());
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleRuntimeException(
+            RuntimeException ex,
+            HttpServletRequest request
+    ) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal Server Error",
+                ex.getMessage() != null ? ex.getMessage() : "Unexpected runtime error occurred",
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(SeatHoldExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleSeatHoldExpired(
+            SeatHoldExpiredException ex, HttpServletRequest request) {
+
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.GONE.value(),           // 410 Gone
+                "Hold Expired",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.GONE).body(error);
+    }
+
+    @ExceptionHandler(SeatNotHeldException.class)
+    public ResponseEntity<ErrorResponse> handleSeatNotHeld(
+            SeatNotHeldException ex, HttpServletRequest request) {
+
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),    // 400
+                "Bad Request",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(SeatHeldByOtherUserException.class)
+    public ResponseEntity<ErrorResponse> handleSeatHeldByOther(
+            SeatHeldByOtherUserException ex, HttpServletRequest request) {
+
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),       // 409
+                "Conflict",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 }

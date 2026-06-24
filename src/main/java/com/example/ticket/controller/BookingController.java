@@ -1,5 +1,6 @@
 package com.example.ticket.controller;
 
+import com.example.ticket.dto.request.ConfirmBookingRequest;
 import com.example.ticket.dto.request.CreateBookingRequest;
 import com.example.ticket.dto.response.BookingResponse;
 import com.example.ticket.service.BookingService;
@@ -38,6 +39,13 @@ public class BookingController {
         return ResponseEntity.ok(
                 bookingService.createBookingPessimistic(request)
         );
+    }
+
+    @PostMapping("/confirm")
+    public ResponseEntity<BookingResponse> confirmBooking(
+            @RequestBody @Valid ConfirmBookingRequest request
+    ) {
+        return ResponseEntity.ok(bookingService.confirmBooking(request));
     }
 }
 

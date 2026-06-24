@@ -3,6 +3,7 @@ package com.example.ticket.service;
 
 import com.example.ticket.dto.request.GenerateSeatsRequest;
 import com.example.ticket.dto.request.HoldSeatRequest;
+import com.example.ticket.dto.response.SeatHoldStatusResponse;
 import com.example.ticket.dto.response.SeatResponse;
 import com.example.ticket.entity.Concert;
 import com.example.ticket.entity.Seat;
@@ -22,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -88,7 +90,7 @@ public class SeatService {
 
 
     @Transactional
-    public void holdSeats(Long concertId, HoldSeatRequest request) {
+    public void holdSeats(HoldSeatRequest request) {
 
 
         Long userId = request.getUserId();
@@ -108,9 +110,6 @@ public class SeatService {
                     throw new SeatUnavailableException("Seat not available: " + seat.getId());
                 }
 
-                if (!seat.getConcert().getId().equals(concertId)) {
-                    throw new RuntimeException("Seat not in this concert");
-                }
 
                 String key = SEAT_HOLD_KEY_PREFIX + seat.getId();
 
@@ -136,6 +135,26 @@ public class SeatService {
 
             throw e;
         }
+    }
+
+    public SeatHoldStatusResponse getHoldStatus(Long seatId){
+
+        String key = SEAT_HOLD_KEY_PREFIX + seatId;
+
+        Object holder = redisTemplate.opsForValue().get(key);
+
+        if(holder == null){
+            return new SeatHoldStatusResponse(seatId, false, 0L);
+        }
+
+        Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+
+        return SeatHoldStatusResponse.builder()
+                .seatId(seatId)
+                .held(true)
+                .remainingSeconds(ttl)
+                .build();
+
     }
 
 

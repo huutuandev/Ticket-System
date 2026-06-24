@@ -31,13 +31,4 @@ public class SeatController {
     public List<SeatResponse> getSeats(@PathVariable Long concertId) {
         return seatService.getSeatsByConcert(concertId);
     }
-
-    @PostMapping("/hold")
-    public ResponseEntity<Void> holdSeats(
-            @PathVariable Long concertId,
-            @Valid @RequestBody HoldSeatRequest request
-    ) {
-        seatService.holdSeats(concertId, request);
-        return ResponseEntity.ok().build();
-    }
 }

@@ -8,6 +8,7 @@ import com.example.ticket.entity.Concert;
 import com.example.ticket.entity.Seat;
 import com.example.ticket.enums.SeatStatus;
 import com.example.ticket.enums.SeatType;
+import com.example.ticket.exception.ResourceNotFoundException;
 import com.example.ticket.exception.SeatAlreadyHeldException;
 import com.example.ticket.exception.SeatUnavailableException;
 import com.example.ticket.repository.ConcertRepository;
@@ -87,11 +88,16 @@ public class SeatService {
 
 
     @Transactional
-    public void holdSeats(HoldSeatRequest request) {
+    public void holdSeats(Long concertId, HoldSeatRequest request) {
+
 
         Long userId = request.getUserId();
 
         List<Seat> seats = seatRepo.findAllById(request.getSeatIds());
+
+        if(seats.size() != request.getSeatIds().size()){
+            throw new ResourceNotFoundException("Seat not found");
+        }
 
         List<String> lockedKeys = new ArrayList<>();
 
@@ -100,6 +106,10 @@ public class SeatService {
 
                 if (seat.getStatus() != SeatStatus.AVAILABLE) {
                     throw new SeatUnavailableException("Seat not available: " + seat.getId());
+                }
+
+                if (!seat.getConcert().getId().equals(concertId)) {
+                    throw new RuntimeException("Seat not in this concert");
                 }
 
                 String key = SEAT_HOLD_KEY_PREFIX + seat.getId();

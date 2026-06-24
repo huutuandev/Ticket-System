@@ -2,6 +2,7 @@ package com.example.ticket.controller;
 
 
 import com.example.ticket.dto.request.GenerateSeatsRequest;
+import com.example.ticket.dto.request.HoldSeatRequest;
 import com.example.ticket.dto.response.SeatResponse;
 import com.example.ticket.service.SeatService;
 import jakarta.validation.Valid;
@@ -18,14 +19,25 @@ public class SeatController {
 
     private final SeatService seatService;
 
-    @PostMapping("/generate")
-    public ResponseEntity<?> generateSeats(@PathVariable Long concertId, @RequestBody @Valid GenerateSeatsRequest  request) {
+    public ResponseEntity<String> generateSeats(
+            @PathVariable Long concertId,
+            @Valid @RequestBody GenerateSeatsRequest request
+    ) {
         seatService.generateSeats(request, concertId);
-        return ResponseEntity.ok("Generated");
+        return ResponseEntity.ok("Generated seats successfully");
     }
 
     @GetMapping
     public List<SeatResponse> getSeats(@PathVariable Long concertId) {
         return seatService.getSeatsByConcert(concertId);
+    }
+
+    @PostMapping("/hold")
+    public ResponseEntity<Void> holdSeats(
+            @PathVariable Long concertId,
+            @Valid @RequestBody HoldSeatRequest request
+    ) {
+        seatService.holdSeats(concertId, request);
+        return ResponseEntity.ok().build();
     }
 }

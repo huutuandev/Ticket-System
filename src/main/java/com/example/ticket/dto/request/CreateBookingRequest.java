@@ -1,6 +1,7 @@
 package com.example.ticket.dto.request;
 
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateBookingRequest {
 
-    @NonNull
+    @NotNull
     private Long userId;
 
     @NotEmpty

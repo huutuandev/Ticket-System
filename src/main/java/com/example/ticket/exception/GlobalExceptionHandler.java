@@ -70,4 +70,14 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
+
+    @ExceptionHandler(SeatAlreadyHeldException.class)
+    public ResponseEntity<String> handleSeatHeld(Exception e) {
+        return ResponseEntity.status(409).body(e.getMessage());
+    }
+
+    @ExceptionHandler(SeatUnavailableException.class)
+    public ResponseEntity<String> handleUnavailable(Exception e) {
+        return ResponseEntity.status(400).body(e.getMessage());
+    }
 }

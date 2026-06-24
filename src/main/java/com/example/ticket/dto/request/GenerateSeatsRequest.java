@@ -1,6 +1,7 @@
 package com.example.ticket.dto.request;
 
 
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Getter
@@ -9,10 +10,10 @@ import lombok.*;
 @AllArgsConstructor
 public class GenerateSeatsRequest {
 
-    @NonNull
+    @NotNull
     private Long rows;
 
-    @NonNull
+    @NotNull
     private Long seatsPerRow;
 
 }

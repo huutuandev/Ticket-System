@@ -1,6 +1,7 @@
 package com.example.ticket.service;
 
 
+import com.example.ticket.config.RabbitMQConfig;
 import com.example.ticket.dto.request.ConfirmBookingRequest;
 import com.example.ticket.dto.request.CreateBookingRequest;
 import com.example.ticket.dto.response.BookingResponse;
@@ -10,12 +11,14 @@ import com.example.ticket.entity.Seat;
 import com.example.ticket.entity.User;
 import com.example.ticket.enums.BookingStatus;
 import com.example.ticket.enums.SeatStatus;
+import com.example.ticket.event.BookingCreatedEvent;
 import com.example.ticket.exception.*;
 import com.example.ticket.repository.BookingRepository;
 import com.example.ticket.repository.BookingSeatRepository;
 import com.example.ticket.repository.SeatRepository;
 import com.example.ticket.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -42,6 +45,7 @@ public class BookingService {
     private static final String SEAT_HOLD_KEY_PREFIX = "hold:seat:";
     private final RedisTemplate<String, Object> redisTemplate;
     private final CacheManager cacheManager;
+    private final RabbitTemplate rabbitTemplate;
 
 
     @Transactional
@@ -123,7 +127,24 @@ public class BookingService {
             seat.setHoldExpiresAt(null);
         }
 
-        return saveBooking(user, seats);
+        BookingResponse response = saveBooking(user, seats);
+
+        // === PUBLISH EVENT (Task 5) ===
+        BookingCreatedEvent event = new BookingCreatedEvent(
+                response.getBookingId(),
+                user.getId(),
+                user.getEmail(),
+                response.getTotalAmount(),
+                response.getBookingDate()
+        );
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.BOOKING_EXCHANGE,
+                RabbitMQConfig.ROUTING_BOOKING_CREATED,
+                event
+        );
+
+        return response;
     }
 
     @Transactional

@@ -30,7 +30,6 @@ public class ConcertService {
         return page.map(this::toResponse);
     }
 
-    @Cacheable(value = "concert", key = "#id")
     public ConcertResponse getConcertById(Long id){
         Concert concert = concertRepo.findById(id)
                 .orElseThrow(()-> new RuntimeException("không tìm thấy concert "+id));

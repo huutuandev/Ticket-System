@@ -1,6 +1,6 @@
 package com.example.ticket.service;
 
-import com.example.ticket.entity.Seat;
+
 import com.example.ticket.enums.SeatStatus;
 import com.example.ticket.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;

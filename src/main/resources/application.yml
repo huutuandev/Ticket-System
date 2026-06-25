@@ -37,6 +37,21 @@ spring:
     port: 5672
     username: ticket_user
     password: ticket_password
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 10
+        acknowledge-mode: auto
+        retry:
+          enabled: true
+          initial-interval: 2000
+          max-attempts: 3
+          multiplier: 2
+
+    # === FIX DESERIALIZATION ===
+    deserialization:
+      trust:
+        all: true
 
 server:
   port: 8080

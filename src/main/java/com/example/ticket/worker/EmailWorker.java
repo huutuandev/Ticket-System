@@ -25,12 +25,4 @@ public class EmailWorker {
 //        fakeEmailService.sendBookingConfirmation(event);
         throw new RuntimeException("Giả lập lỗi gửi email!");
     }
-
-    // Trong EmailWorker hoặc tạo file riêng DLQMonitor.java
-    @RabbitListener(queues = "booking.dlq")
-    public void handleDeadLetter(BookingCreatedEvent event) {
-        log.error("[DLQ] ❌ Message thất bại sau 3 lần retry — bookingId={}, email={}",
-                event.getBookingId(), event.getEmail());
-        // Production: alert Slack, lưu DB, gửi email admin...
-    }
 }

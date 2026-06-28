@@ -5,6 +5,7 @@ import com.example.ticket.dto.request.GenerateSeatsRequest;
 import com.example.ticket.dto.request.HoldSeatRequest;
 import com.example.ticket.dto.response.SeatHoldStatusResponse;
 import com.example.ticket.dto.response.SeatResponse;
+import com.example.ticket.dto.response.HoldSeatResponse;
 import com.example.ticket.entity.Concert;
 import com.example.ticket.entity.Seat;
 import com.example.ticket.enums.SeatStatus;
@@ -100,7 +101,7 @@ public class SeatService {
 
 
     @Transactional
-    public void holdSeats(HoldSeatRequest request, Long userId) {
+    public HoldSeatResponse holdSeats(HoldSeatRequest request, Long userId) {
 
         List<Seat> seats = seatRepo.findAllById(request.getSeatIds());
 
@@ -143,9 +144,26 @@ public class SeatService {
                 Cache cache = cacheManager.getCache("concert-seats");
                 if (cache != null) {
                     cache.evict(concertId);
-//                log.info("Cache evicted for concertId: {}", concertId);
                 }
             }
+
+            List<HoldSeatResponse.HeldSeatDto> heldSeatDtos = seats.stream()
+                    .map(seat -> HoldSeatResponse.HeldSeatDto.builder()
+                            .seatId(seat.getId())
+                            .seatCode(seat.getRowName() + seat.getSeatNumber())
+                            .price(seat.getPrice())
+                            .build())
+                    .toList();
+
+            BigDecimal totalAmount = seats.stream()
+                    .map(Seat::getPrice)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            return HoldSeatResponse.builder()
+                    .heldSeats(heldSeatDtos)
+                    .totalAmount(totalAmount)
+                    .holdExpiresAt(expireTime)
+                    .build();
 
         } catch (Exception e) {
 

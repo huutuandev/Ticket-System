@@ -1,132 +1,102 @@
 package com.example.ticket.exception;
 
-import com.example.ticket.dto.response.ErrorResponse;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.HttpStatus;
+import com.example.ticket.dto.response.ApiResponse;
+import com.example.ticket.enums.ErrorCode;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(SeatUnavailableException.class)
-    public ResponseEntity<ErrorResponse> handleSeatUnavailable(
-            SeatUnavailableException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                "Conflict",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    public ResponseEntity<ApiResponse<Object>> handleSeatUnavailable(SeatUnavailableException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.SEAT_UNAVAILABLE.getCode(), ex.getMessage());
+        return ResponseEntity.status(ErrorCode.SEAT_UNAVAILABLE.getStatusCode()).body(apiResponse);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(
-            ResourceNotFoundException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
-
-    // fallback (tránh lộ stacktrace)
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleAll(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                "Something went wrong",
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    public ResponseEntity<ApiResponse<Object>> handleNotFound(ResourceNotFoundException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.RESOURCE_NOT_FOUND.getCode(), ex.getMessage());
+        return ResponseEntity.status(ErrorCode.RESOURCE_NOT_FOUND.getStatusCode()).body(apiResponse);
     }
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-    public ResponseEntity<ErrorResponse> handleOptimisticLock(
-            ObjectOptimisticLockingFailureException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                "Conflict",
-                "Seat was booked by another user. Please try again",
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    public ResponseEntity<ApiResponse<Object>> handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.OPTIMISTIC_LOCK.getCode(), ErrorCode.OPTIMISTIC_LOCK.getMessage());
+        return ResponseEntity.status(ErrorCode.OPTIMISTIC_LOCK.getStatusCode()).body(apiResponse);
     }
 
     @ExceptionHandler(SeatAlreadyHeldException.class)
-    public ResponseEntity<String> handleSeatHeld(Exception e) {
-        return ResponseEntity.status(409).body(e.getMessage());
-    }
-
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(
-            RuntimeException ex,
-            HttpServletRequest request
-    ) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                ex.getMessage() != null ? ex.getMessage() : "Unexpected runtime error occurred",
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    public ResponseEntity<ApiResponse<Object>> handleSeatHeld(SeatAlreadyHeldException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.SEAT_ALREADY_HELD.getCode(), ex.getMessage());
+        return ResponseEntity.status(ErrorCode.SEAT_ALREADY_HELD.getStatusCode()).body(apiResponse);
     }
 
     @ExceptionHandler(SeatHoldExpiredException.class)
-    public ResponseEntity<ErrorResponse> handleSeatHoldExpired(
-            SeatHoldExpiredException ex, HttpServletRequest request) {
-
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.GONE.value(),           // 410 Gone
-                "Hold Expired",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.GONE).body(error);
+    public ResponseEntity<ApiResponse<Object>> handleSeatHoldExpired(SeatHoldExpiredException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.SEAT_HOLD_EXPIRED.getCode(), ex.getMessage());
+        return ResponseEntity.status(ErrorCode.SEAT_HOLD_EXPIRED.getStatusCode()).body(apiResponse);
     }
 
     @ExceptionHandler(SeatNotHeldException.class)
-    public ResponseEntity<ErrorResponse> handleSeatNotHeld(
-            SeatNotHeldException ex, HttpServletRequest request) {
-
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),    // 400
-                "Bad Request",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    public ResponseEntity<ApiResponse<Object>> handleSeatNotHeld(SeatNotHeldException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.SEAT_NOT_HELD.getCode(), ex.getMessage());
+        return ResponseEntity.status(ErrorCode.SEAT_NOT_HELD.getStatusCode()).body(apiResponse);
     }
 
     @ExceptionHandler(SeatHeldByOtherUserException.class)
-    public ResponseEntity<ErrorResponse> handleSeatHeldByOther(
-            SeatHeldByOtherUserException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Object>> handleSeatHeldByOther(SeatHeldByOtherUserException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.SEAT_HELD_BY_OTHER.getCode(), ex.getMessage());
+        return ResponseEntity.status(ErrorCode.SEAT_HELD_BY_OTHER.getStatusCode()).body(apiResponse);
+    }
 
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),       // 409
-                "Conflict",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    @ExceptionHandler(PaymentNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handlePaymentNotFound(PaymentNotFoundException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.PAYMENT_NOT_FOUND.getCode(), ex.getMessage());
+        return ResponseEntity.status(ErrorCode.PAYMENT_NOT_FOUND.getStatusCode()).body(apiResponse);
+    }
+
+    @ExceptionHandler(InvalidPaymentStateException.class)
+    public ResponseEntity<ApiResponse<Object>> handleInvalidPaymentState(InvalidPaymentStateException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.INVALID_PAYMENT_STATE.getCode(), ex.getMessage());
+        return ResponseEntity.status(ErrorCode.INVALID_PAYMENT_STATE.getStatusCode()).body(apiResponse);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Object>> handleValidationException(MethodArgumentNotValidException ex) {
+        String defaultMessage = "Validation failed";
+        if (ex.getBindingResult().getFieldError() != null) {
+            defaultMessage = ex.getBindingResult().getFieldError().getDefaultMessage();
+        }
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.INVALID_ARGUMENT.getCode(), defaultMessage);
+        return ResponseEntity.status(ErrorCode.INVALID_ARGUMENT.getStatusCode()).body(apiResponse);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleConstraintViolationException(ConstraintViolationException ex) {
+        String defaultMessage = "Constraint violation";
+        if (ex.getConstraintViolations() != null && !ex.getConstraintViolations().isEmpty()) {
+            defaultMessage = ex.getConstraintViolations().iterator().next().getMessage();
+        }
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.INVALID_ARGUMENT.getCode(), defaultMessage);
+        return ResponseEntity.status(ErrorCode.INVALID_ARGUMENT.getStatusCode()).body(apiResponse);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode(),
+                ex.getMessage() != null ? ex.getMessage() : "Unexpected runtime error occurred");
+        return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode()).body(apiResponse);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Object>> handleAll(Exception ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode(),
+                ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
+        return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode()).body(apiResponse);
     }
 }

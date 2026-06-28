@@ -49,8 +49,7 @@ public class BookingService {
 
 
     @Transactional
-    public BookingResponse confirmBooking(ConfirmBookingRequest request){
-        Long userId = request.getUserId();
+    public BookingResponse confirmBooking(ConfirmBookingRequest request, Long userId){
 
         List<Long> seatIds = request.getSeatIds();
 
@@ -93,7 +92,7 @@ public class BookingService {
         }
 
         BookingResponse response = createBookingOptimistic(
-                new CreateBookingRequest(userId, seatIds)
+                new CreateBookingRequest(seatIds), userId
         );
 
         redisTemplate.delete(keysToDelete);
@@ -104,9 +103,9 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse createBookingOptimistic(CreateBookingRequest bookingRequest) {
+    public BookingResponse createBookingOptimistic(CreateBookingRequest bookingRequest, Long userId) {
 
-        User user = userRepo.findById(bookingRequest.getUserId())
+        User user = userRepo.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user"));
 
         List<Long> sortedIds = bookingRequest.getSeatIds()
@@ -148,10 +147,10 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse createBookingPessimistic(CreateBookingRequest bookingRequest)
+    public BookingResponse createBookingPessimistic(CreateBookingRequest bookingRequest, Long userId)
             throws InterruptedException {
 
-        User user = userRepo.findById(bookingRequest.getUserId())
+        User user = userRepo.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user"));
 
         List<Long> sortedIds = bookingRequest.getSeatIds()

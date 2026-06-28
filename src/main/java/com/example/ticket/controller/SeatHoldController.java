@@ -8,6 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.ticket.security.user.UserPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 @RestController
 @RequestMapping("/api/seats")
 @RequiredArgsConstructor
@@ -24,9 +27,10 @@ public class SeatHoldController {
 
     @PostMapping("/hold")
     public ResponseEntity<Void> holdSeats(
-            @Valid @RequestBody HoldSeatRequest request
+            @Valid @RequestBody HoldSeatRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
     ) {
-        seatService.holdSeats(request);
+        seatService.holdSeats(request, principal.getId());
         return ResponseEntity.ok().build();
     }
 }

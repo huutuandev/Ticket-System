@@ -100,10 +100,7 @@ public class SeatService {
 
 
     @Transactional
-    public void holdSeats(HoldSeatRequest request) {
-
-
-        Long userId = request.getUserId();
+    public void holdSeats(HoldSeatRequest request, Long userId) {
 
         List<Seat> seats = seatRepo.findAllById(request.getSeatIds());
 

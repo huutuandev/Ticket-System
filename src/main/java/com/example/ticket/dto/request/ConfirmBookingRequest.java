@@ -16,8 +16,6 @@ import java.util.List;
 @AllArgsConstructor
 public class ConfirmBookingRequest {
 
-    @NotNull
-    private Long userId;
 
     @NotEmpty
     private List<Long> seatIds;

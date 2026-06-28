@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.ticket.security.user.UserPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 @RestController
 @RequestMapping("/api/bookings")
 @RequiredArgsConstructor
@@ -22,30 +25,33 @@ public class BookingController {
     // 🔹 Optimistic Locking
     @PostMapping("/optimistic")
     public ResponseEntity<BookingResponse> bookingSeatsOptimistic(
-            @RequestBody @Valid CreateBookingRequest request
+            @RequestBody @Valid CreateBookingRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
     ) throws InterruptedException {
 
         return ResponseEntity.ok(
-                bookingService.createBookingOptimistic(request)
+                bookingService.createBookingOptimistic(request, principal.getId())
         );
     }
 
     // 🔹 Pessimistic Locking
     @PostMapping("/pessimistic")
     public ResponseEntity<BookingResponse> bookingSeatsPessimistic(
-            @RequestBody @Valid CreateBookingRequest request
+            @RequestBody @Valid CreateBookingRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
     ) throws InterruptedException {
 
         return ResponseEntity.ok(
-                bookingService.createBookingPessimistic(request)
+                bookingService.createBookingPessimistic(request, principal.getId())
         );
     }
 
     @PostMapping("/confirm")
     public ResponseEntity<BookingResponse> confirmBooking(
-            @RequestBody @Valid ConfirmBookingRequest request
+            @RequestBody @Valid ConfirmBookingRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
     ) {
-        return ResponseEntity.ok(bookingService.confirmBooking(request));
+        return ResponseEntity.ok(bookingService.confirmBooking(request, principal.getId()));
     }
 }
 

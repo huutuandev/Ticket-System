@@ -13,8 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateBookingRequest {
 
-    @NotNull
-    private Long userId;
 
     @NotEmpty
     private List<Long> seatIds;

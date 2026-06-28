@@ -17,8 +17,6 @@ import java.util.List;
 @AllArgsConstructor
 public class HoldSeatRequest {
 
-    @NotNull
-    private Long userId;
 
     @NotEmpty
     private List<Long> seatIds;

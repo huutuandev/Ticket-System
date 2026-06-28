@@ -127,4 +127,10 @@ public class AuthService {
                 .refreshToken(newRefreshToken)
                 .build();
     }
+
+
+    public void logout(UserPrincipal principal) {
+        String redisKey = "refresh:token:" + principal.getId();
+        redisTemplate.delete(redisKey);
+    }
 }

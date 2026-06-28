@@ -17,12 +17,12 @@ public class EmailWorker {
     @RabbitListener(queues = "booking.queue")
     public void handleBookingCreated(BookingCreatedEvent event) {
         log.info("[EmailWorker] Received event for bookingId={}", event.getBookingId());
+    
+
+        System.out.println("Send email booking: " + event.getBookingId());
 
 
-//        System.out.println("Send email booking: " + event.getBookingId());
-//
-//
-//        fakeEmailService.sendBookingConfirmation(event);
-        throw new RuntimeException("Giả lập lỗi gửi email!");
+        fakeEmailService.sendBookingConfirmation(event);
+//        throw new RuntimeException("Giả lập lỗi gửi email!");
     }
 }

@@ -2,6 +2,7 @@ package com.example.ticket.controller;
 
 import com.example.ticket.dto.request.ConfirmBookingRequest;
 import com.example.ticket.dto.request.CreateBookingRequest;
+import com.example.ticket.dto.response.ApiResponse;
 import com.example.ticket.dto.response.BookingResponse;
 import com.example.ticket.service.BookingService;
 import jakarta.validation.Valid;
@@ -24,34 +25,33 @@ public class BookingController {
 
     // 🔹 Optimistic Locking
     @PostMapping("/optimistic")
-    public ResponseEntity<BookingResponse> bookingSeatsOptimistic(
+    public ResponseEntity<ApiResponse<BookingResponse>> bookingSeatsOptimistic(
             @RequestBody @Valid CreateBookingRequest request,
             @AuthenticationPrincipal UserPrincipal principal
     ) throws InterruptedException {
-
         return ResponseEntity.ok(
-                bookingService.createBookingOptimistic(request, principal.getId())
+                ApiResponse.success(bookingService.createBookingOptimistic(request, principal.getId()))
         );
     }
 
     // 🔹 Pessimistic Locking
     @PostMapping("/pessimistic")
-    public ResponseEntity<BookingResponse> bookingSeatsPessimistic(
+    public ResponseEntity<ApiResponse<BookingResponse>> bookingSeatsPessimistic(
             @RequestBody @Valid CreateBookingRequest request,
             @AuthenticationPrincipal UserPrincipal principal
     ) throws InterruptedException {
-
         return ResponseEntity.ok(
-                bookingService.createBookingPessimistic(request, principal.getId())
+                ApiResponse.success(bookingService.createBookingPessimistic(request, principal.getId()))
         );
     }
 
     @PostMapping("/confirm")
-    public ResponseEntity<BookingResponse> confirmBooking(
+    public ResponseEntity<ApiResponse<BookingResponse>> confirmBooking(
             @RequestBody @Valid ConfirmBookingRequest request,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        return ResponseEntity.ok(bookingService.confirmBooking(request, principal.getId()));
+        return ResponseEntity.ok(
+                ApiResponse.success(bookingService.confirmBooking(request, principal.getId()))
+        );
     }
 }
-

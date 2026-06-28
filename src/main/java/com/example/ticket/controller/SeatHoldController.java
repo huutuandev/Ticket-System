@@ -1,6 +1,8 @@
 package com.example.ticket.controller;
 
 import com.example.ticket.dto.request.HoldSeatRequest;
+import com.example.ticket.dto.response.ApiResponse;
+import com.example.ticket.dto.response.HoldSeatResponse;
 import com.example.ticket.dto.response.SeatHoldStatusResponse;
 import com.example.ticket.service.SeatService;
 import jakarta.validation.Valid;
@@ -19,18 +21,18 @@ public class SeatHoldController {
     private final SeatService seatService;
 
     @GetMapping("/{id}/hold-status")
-    public ResponseEntity<SeatHoldStatusResponse> getHoldStatus(
+    public ResponseEntity<ApiResponse<SeatHoldStatusResponse>> getHoldStatus(
             @PathVariable Long id
     ) {
-        return ResponseEntity.ok(seatService.getHoldStatus(id));
+        return ResponseEntity.ok(ApiResponse.success(seatService.getHoldStatus(id)));
     }
 
     @PostMapping("/hold")
-    public ResponseEntity<Void> holdSeats(
+    public ResponseEntity<ApiResponse<HoldSeatResponse>> holdSeats(
             @Valid @RequestBody HoldSeatRequest request,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        seatService.holdSeats(request, principal.getId());
-        return ResponseEntity.ok().build();
+        HoldSeatResponse response = seatService.holdSeats(request, principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

@@ -10,7 +10,7 @@ public class FakeEmailService {
 
     public void sendBookingConfirmation(BookingCreatedEvent event) {
         log.info("[FakeEmail] Bắt đầu gửi email tới {} cho bookingId={}",
-                event.getEmail(), event.getBookingId());
+                event.getUserEmail(), event.getBookingId());
 
         try {
             // Giả lập gửi mail mất 5 giây

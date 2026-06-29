@@ -24,6 +24,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ErrorCode.RESOURCE_NOT_FOUND.getStatusCode()).body(apiResponse);
     }
 
+    @ExceptionHandler(ConcertNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleConcertNotFound(ConcertNotFoundException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.RESOURCE_NOT_FOUND.getCode(), ex.getMessage());
+        return ResponseEntity.status(ErrorCode.RESOURCE_NOT_FOUND.getStatusCode()).body(apiResponse);
+    }
+
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ApiResponse<Object>> handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
         ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.OPTIMISTIC_LOCK.getCode(), ErrorCode.OPTIMISTIC_LOCK.getMessage());

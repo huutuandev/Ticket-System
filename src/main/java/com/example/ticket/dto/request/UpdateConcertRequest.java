@@ -1,6 +1,6 @@
-package com.example.ticket.dto.response;
+package com.example.ticket.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,9 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConcertResponse {
-
-    private Long id;
+public class UpdateConcertRequest {
 
     private String name;
 
@@ -26,5 +24,4 @@ public class ConcertResponse {
 
     private String imageUrl;
 
-    private LocalDateTime creatAt;
 }

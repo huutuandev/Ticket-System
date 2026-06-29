@@ -1,6 +1,7 @@
 package com.example.ticket.controller;
 
 import com.example.ticket.dto.request.CreateConcertRequest;
+import com.example.ticket.dto.request.UpdateConcertRequest;
 import com.example.ticket.dto.response.ApiResponse;
 import com.example.ticket.dto.response.ConcertResponse;
 import com.example.ticket.service.ConcertService;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,10 +23,19 @@ public class ConcertController {
 
     private final ConcertService concertService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ConcertResponse>> createConcert(@RequestBody @Valid CreateConcertRequest concertRequest){
+    public ResponseEntity<ApiResponse<ConcertResponse>> createConcert(
+            @Valid @RequestBody CreateConcertRequest concertRequest) {
         return ResponseEntity.ok(ApiResponse.success(concertService.createConcert(concertRequest)));
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ConcertResponse>> updateConcert(
+            @PathVariable Long id,
+            @RequestBody UpdateConcertRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(concertService.updateConcert(id, request)));
     }
 
     @GetMapping

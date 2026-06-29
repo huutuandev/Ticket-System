@@ -29,4 +29,7 @@ public class CreateConcertRequest {
 
     private String description;
 
+    @NotBlank
+    private String imageUrl;
+
 }

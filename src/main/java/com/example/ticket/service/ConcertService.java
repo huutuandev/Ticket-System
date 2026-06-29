@@ -11,7 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-
+import com.example.ticket.dto.request.UpdateConcertRequest;
+import com.example.ticket.exception.ConcertNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ConcertService {
@@ -20,11 +22,35 @@ public class ConcertService {
 
     public ConcertResponse createConcert(CreateConcertRequest concertRequest){
         Concert concert  = toEntity(concertRequest);
+        concert.setImageUrl(concertRequest.getImageUrl());
         concertRepo.save(concert);
         return toResponse(concert);
     }
 
+    @Transactional
+    public ConcertResponse updateConcert(Long id, UpdateConcertRequest request) {
+        Concert concert = concertRepo.findById(id)
+                .orElseThrow(() -> new ConcertNotFoundException(id));
 
+        if (request.getName() != null) {
+            concert.setName(request.getName());
+        }
+        if (request.getLocation() != null) {
+            concert.setLocation(request.getLocation());
+        }
+        if (request.getEventTime() != null) {
+            concert.setEventTime(request.getEventTime());
+        }
+        if (request.getDescription() != null) {
+            concert.setDescription(request.getDescription());
+        }
+        if (request.getImageUrl() != null) {
+            concert.setImageUrl(request.getImageUrl());
+        }
+
+        Concert saved = concertRepo.save(concert);
+        return toResponse(saved);
+    }
     public Page<ConcertResponse> getAllConcerts(Pageable pageable){
         Page<Concert> page = concertRepo.findAll(pageable);
         return page.map(this::toResponse);
@@ -52,6 +78,7 @@ public class ConcertService {
         concertResponse.setName(concert.getName());
         concertResponse.setLocation(concert.getLocation());
         concertResponse.setDescription(concert.getDescription());
+        concertResponse.setImageUrl(concert.getImageUrl());
         concertResponse.setEventTime(concert.getEventTime());
         concertResponse.setCreatAt(concert.getCreatedAt());
         return concertResponse;

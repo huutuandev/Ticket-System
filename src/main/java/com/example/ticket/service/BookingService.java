@@ -10,15 +10,17 @@ import com.example.ticket.entity.BookingSeat;
 import com.example.ticket.entity.Seat;
 import com.example.ticket.entity.User;
 import com.example.ticket.enums.BookingStatus;
+import com.example.ticket.enums.EmailType;
 import com.example.ticket.enums.SeatStatus;
 import com.example.ticket.event.BookingCreatedEvent;
+import com.example.ticket.event.EmailEvent;
 import com.example.ticket.exception.*;
 import com.example.ticket.repository.BookingRepository;
 import com.example.ticket.repository.BookingSeatRepository;
 import com.example.ticket.repository.SeatRepository;
 import com.example.ticket.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -45,7 +47,7 @@ public class BookingService {
     private static final String SEAT_HOLD_KEY_PREFIX = "hold:seat:";
     private final RedisTemplate<String, Object> redisTemplate;
     private final CacheManager cacheManager;
-    private final RabbitTemplate rabbitTemplate;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
 
     @Transactional
@@ -128,20 +130,26 @@ public class BookingService {
 
         BookingResponse response = saveBooking(user, seats);
 
-        // === PUBLISH EVENT (Task 5) ===
+        // === PUBLISH EVENT ===
+        String concertName = seats.get(0).getConcert().getName();
+        String showTime = seats.get(0).getConcert().getEventTime().toString();
+        String seatsStr = seats.stream()
+                .map(s -> s.getRowName() + s.getSeatNumber())
+                .collect(java.util.stream.Collectors.joining(", "));
+
         BookingCreatedEvent event = new BookingCreatedEvent(
                 response.getBookingId(),
                 user.getId(),
                 user.getEmail(),
+                user.getFullName(),
+                concertName,
+                showTime,
+                seatsStr,
                 response.getTotalAmount(),
                 response.getBookingDate()
         );
 
-        rabbitTemplate.convertAndSend(
-                RabbitMQConfig.BOOKING_EXCHANGE,
-                RabbitMQConfig.ROUTING_BOOKING_CREATED,
-                event
-        );
+        applicationEventPublisher.publishEvent(event);
 
         return response;
     }

@@ -1,0 +1,1 @@
+ALTER TABLE concerts ADD COLUMN image_url VARCHAR(255);

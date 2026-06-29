@@ -22,15 +22,14 @@ public class User {
     private Long id;
 
     @NotBlank
-    private String username;
-
-    @NotBlank
     private String email;
 
     @Column(name = "full_name")
     private String fullName;
 
     private String password;
+
+    private String status = "INACTIVE";
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();

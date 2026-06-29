@@ -25,6 +25,9 @@ public class Concert {
     @Column(name = "event_time")
     private LocalDateTime eventTime;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
 
     private String description;
 

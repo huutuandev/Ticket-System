@@ -132,7 +132,6 @@ public class BookingService {
 
         // === PUBLISH EVENT ===
         String concertName = seats.get(0).getConcert().getName();
-        String showTime = seats.get(0).getConcert().getEventTime().toString();
         String seatsStr = seats.stream()
                 .map(s -> s.getRowName() + s.getSeatNumber())
                 .collect(java.util.stream.Collectors.joining(", "));
@@ -143,7 +142,7 @@ public class BookingService {
                 user.getEmail(),
                 user.getFullName(),
                 concertName,
-                showTime,
+                seats.get(0).getConcert().getEventTime(),
                 seatsStr,
                 response.getTotalAmount(),
                 response.getBookingDate()

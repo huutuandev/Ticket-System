@@ -1,5 +1,9 @@
 package com.example.ticket.service;
 
+import com.example.ticket.util.DateTimeFormatUtil;
+
+import java.time.LocalDateTime;
+
 /**
  * Builder các template HTML cho email — không phụ thuộc Thymeleaf,
  * dùng text block Java thuần để dễ copy/sửa.
@@ -60,19 +64,34 @@ public class EmailTemplateBuilder {
     }
 
     /** Template xác nhận booking thành công */
-    public static String bookingConfirmedTemplate(String customerName, String movieName,
-                                                  String showTime, String seats, String totalPrice) {
+    public static String bookingConfirmedTemplate(String customerName, String concertName,
+                                                  LocalDateTime showTime, String seats, String totalPrice) {
+        String content = """
+            <p>Xin chào <b>%s</b>,</p>
+            <p>Đặt vé của bạn đã được xác nhận thành công 🎉</p>
+            <table width="100%%" cellpadding="6" style="margin:20px 0;font-size:14px;">
+              <tr><td style="color:#888;">Concert</td><td><b>%s</b></td></tr>
+              <tr><td style="color:#888;">Giờ diễn</td><td>%s</td></tr>
+              <tr><td style="color:#888;">Ghế</td><td>%s</td></tr>
+              <tr><td style="color:#888;">Tổng tiền</td><td><b style="color:#1a73e8;">%s</b></td></tr>
+            </table>
+            """.formatted(customerName, concertName, DateTimeFormatUtil.forEmail(showTime), seats, totalPrice);
+        return WRAPPER_OPEN + content + WRAPPER_CLOSE;
+    }
+
+    /** Template vé điện tử (PDF) đã sẵn sàng */
+    public static String ticketReadyTemplate(String customerName, String ticketUrl) {
         String content = """
                 <p>Xin chào <b>%s</b>,</p>
-                <p>Đặt vé của bạn đã được xác nhận thành công 🎉</p>
-                <table width="100%%" cellpadding="6" style="margin:20px 0;font-size:14px;">
-                  <tr><td style="color:#888;">Phim</td><td><b>%s</b></td></tr>
-                  <tr><td style="color:#888;">Giờ chiếu</td><td>%s</td></tr>
-                  <tr><td style="color:#888;">Ghế</td><td>%s</td></tr>
-                  <tr><td style="color:#888;">Tổng tiền</td><td><b style="color:#1a73e8;">%s</b></td></tr>
-                </table>
-                <p>Vé điện tử (PDF) sẽ được gửi trong email kế tiếp.</p>
-                """.formatted(customerName, movieName, showTime, seats, totalPrice);
+                <p>Vé điện tử của bạn đã sẵn sàng 🎫</p>
+                <div style="text-align:center;margin:24px 0;">
+                  <a href="%s" style="display:inline-block;background:#1a73e8;color:#ffffff;
+                               font-size:16px;font-weight:600;text-decoration:none;
+                               padding:12px 24px;border-radius:6px;">Tải vé điện tử (PDF)</a>
+                </div>
+                <p>Vui lòng xuất trình mã QR trên vé khi vào rạp.</p>
+                <p>Chúc bạn xem phim vui vẻ!</p>
+                """.formatted(customerName, ticketUrl);
         return WRAPPER_OPEN + content + WRAPPER_CLOSE;
     }
 }

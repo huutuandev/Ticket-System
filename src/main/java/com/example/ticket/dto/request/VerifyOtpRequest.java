@@ -9,14 +9,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegisterRequest {
+public class VerifyOtpRequest {
 
     @NotBlank
     @Email
     private String email;
 
     @NotBlank
-    private String password;
-
-    private String fullName;
+    private String otp;
 }

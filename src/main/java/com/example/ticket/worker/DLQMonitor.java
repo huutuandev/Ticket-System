@@ -14,7 +14,7 @@ public class DLQMonitor {
     @RabbitListener(queues = RabbitMQConfig.BOOKING_DLQ)
     public void handleDeadLetter(BookingCreatedEvent event) {
         log.error("[DLQ] ❌ Message thất bại sau retry — bookingId={}, email={}",
-                event.getBookingId(), event.getEmail());
+                event.getBookingId(), event.getUserEmail());
         // Production: alert Slack, lưu DB, notify admin...
     }
 }

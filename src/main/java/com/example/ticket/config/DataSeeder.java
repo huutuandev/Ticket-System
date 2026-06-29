@@ -20,7 +20,7 @@ public class DataSeeder {
         return args -> {
             if (userRepo.count() == 0) {
                 User u = new User();
-                u.setUsername("test");
+//                u.setUsername("test");
                 u.setEmail("test@gmail.com");
                 u.setFullName("Test User");
                 u.setPassword(passwordEncoder.encode("123"));

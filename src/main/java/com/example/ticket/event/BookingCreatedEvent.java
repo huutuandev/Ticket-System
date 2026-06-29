@@ -15,7 +15,11 @@ public class BookingCreatedEvent implements Serializable {
 
     private Long bookingId;
     private Long userId;
-    private String email;
+    private String userEmail;
+    private String userFullName;
+    private String concertName;
+    private String showTime;
+    private String seats;
     private BigDecimal totalAmount;
     private LocalDateTime bookingDate;
 }

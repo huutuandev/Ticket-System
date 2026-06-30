@@ -5,8 +5,8 @@ spring:
   # PostgreSQL Configuration
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:ticket_db}
-    username: ${POSTGRES_USER:ticket_user}
-    password: ${POSTGRES_PASSWORD:ticket_password}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   # JPA / Hibernate Configuration
@@ -28,15 +28,15 @@ spring:
   # Redis Configuration
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
   # RabbitMQ Configuration
   rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:ticket_user}
-    password: ${RABBITMQ_PASSWORD:ticket_password}
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
     listener:
       simple:
         concurrency: 5
@@ -56,8 +56,8 @@ spring:
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:bdsan2025@gmail.com}
-    password: ${MAIL_PASSWORD:dfrl tksh ixzw fuvf}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -69,11 +69,11 @@ server:
   port: 8080
 
 jwt:
-  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
-  expiration: ${JWT_EXPIRATION:900000} # 15 minutes (in milliseconds)
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days (in milliseconds)
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION} 
 
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME:do52muxfx}
-  api-key: ${CLOUDINARY_API_KEY:448294649528449}
-  api-secret: ${CLOUDINARY_API_SECRET:8sMegZ_dSdZHhAriUb8JtXjCJMA}
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}

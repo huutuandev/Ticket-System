@@ -22,9 +22,6 @@ public class User {
     private Long id;
 
     @NotBlank
-    private String username;
-
-    @NotBlank
     private String email;
 
     @Column(name = "full_name")
@@ -32,10 +29,20 @@ public class User {
 
     private String password;
 
+    private String status = "INACTIVE";
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "user",cascade = {CascadeType.MERGE, CascadeType.PERSIST}, orphanRemoval = true)
     private Set<Booking> bookings = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
 
 }

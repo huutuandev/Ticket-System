@@ -89,7 +89,6 @@ public class PaymentControllerIntegrationTest {
 
         // Seed data
         user = new User();
-        user.setUsername("testuser");
         user.setEmail("test@gmail.com");
         user.setFullName("Test User");
         user.setPassword("password");
@@ -148,7 +147,6 @@ public class PaymentControllerIntegrationTest {
         // 2. Create Payment
         PaymentCreateRequest createReq = PaymentCreateRequest.builder()
                 .seatIds(List.of(seat.getId()))
-                .userId(user.getId())
                 .build();
 
         UserPrincipal principal = UserPrincipal.create(user);
@@ -208,7 +206,6 @@ public class PaymentControllerIntegrationTest {
         // 2. Create Payment
         PaymentCreateRequest createReq = PaymentCreateRequest.builder()
                 .seatIds(List.of(seat.getId()))
-                .userId(user.getId())
                 .build();
 
         UserPrincipal principal = UserPrincipal.create(user);

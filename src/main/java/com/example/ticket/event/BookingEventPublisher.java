@@ -17,7 +17,9 @@ public class BookingEventPublisher {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleBookingCreatedEvent(BookingCreatedEvent event) {
-        log.info("Publishing BookingCreatedEvent to RabbitMQ for bookingId: {}", event.getBookingId());
+        log.info("Publishing BookingCreatedEvent to RabbitMQ for bookingId: {}, exchange: {}, routingKey: {}", 
+                event.getBookingId(), RabbitMQConfig.BOOKING_EXCHANGE, RabbitMQConfig.ROUTING_BOOKING_CREATED);
+        log.debug("Event payload: {}", event);
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.BOOKING_EXCHANGE,
                 RabbitMQConfig.ROUTING_BOOKING_CREATED,

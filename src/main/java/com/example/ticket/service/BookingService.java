@@ -19,6 +19,7 @@ import com.example.ticket.repository.BookingSeatRepository;
 import com.example.ticket.repository.SeatRepository;
 import com.example.ticket.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -40,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BookingService {
     private final BookingRepository bookingRepo;
     private final UserRepository userRepo;
@@ -53,7 +55,7 @@ public class BookingService {
 
     @Transactional
     public BookingResponse confirmBooking(ConfirmBookingRequest request, Long userId){
-
+        log.info("Bắt đầu confirm booking cho userId {} với các seatIds {}", userId, request.getSeatIds());
         List<Long> seatIds = request.getSeatIds();
 
         LocalDateTime now =  LocalDateTime.now();
@@ -99,9 +101,11 @@ public class BookingService {
         );
 
         redisTemplate.delete(keysToDelete);
+        log.debug("Đã xoá Redis hold keys: {}", keysToDelete);
 
         evictSeatCache(concertId);
 
+        log.info("Confirm booking thành công cho userId {}", userId);
         return response;
     }
 

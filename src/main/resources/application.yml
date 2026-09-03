@@ -2,17 +2,15 @@ spring:
   application:
     name: ticket-booking-system
 
-  # PostgreSQL Configuration
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:ticket_db}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
-  # JPA / Hibernate Configuration
   jpa:
     hibernate:
-      ddl-auto: none # Sử dụng Flyway để quản lý schema, không dùng Hibernate update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
@@ -74,6 +72,19 @@ jwt:
   refresh-expiration: ${JWT_REFRESH_EXPIRATION} 
 
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME}
-  api-key: ${CLOUDINARY_API_KEY}
-  api-secret: ${CLOUDINARY_API_SECRET}
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:do52muxfx}
+  api-key: ${CLOUDINARY_API_KEY:448294649528449}
+  api-secret: ${CLOUDINARY_API_SECRET:8sMegZ_dSdZHhAriUb8JtXjCJMA}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ticket-system
+

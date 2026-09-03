@@ -8,8 +8,10 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(SeatUnavailableException.class)
@@ -100,6 +102,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException ex) {
+        log.error("RuntimeException: {}", ex.getMessage(), ex);
         ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode(),
                 ex.getMessage() != null ? ex.getMessage() : "Unexpected runtime error occurred");
         return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode()).body(apiResponse);
@@ -107,6 +110,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleAll(Exception ex) {
+        log.error("Exception chưa được catch: {}", ex.getMessage(), ex);
         ApiResponse<Object> apiResponse = ApiResponse.error(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode(),
                 ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
         return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode()).body(apiResponse);

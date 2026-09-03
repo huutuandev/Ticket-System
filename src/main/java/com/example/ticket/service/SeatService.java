@@ -16,6 +16,7 @@ import com.example.ticket.exception.SeatUnavailableException;
 import com.example.ticket.repository.ConcertRepository;
 import com.example.ticket.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SeatService {
     private final ConcertRepository concertRepo;
     private final SeatRepository seatRepo;
@@ -133,7 +135,10 @@ public class SeatService {
                 );
 
                 if (Boolean.FALSE.equals(success)) {
+                    log.warn("Hold seat thất bại (Redis SETNX). Key: {}, UserId: {}", key, userId);
                     throw new SeatAlreadyHeldException("Seat already held: " + seat.getId());
+                } else {
+                    log.debug("Hold seat thành công (Redis SETNX). Key: {}, UserId: {}, TTL: 5 minutes", key, userId);
                 }
 
                 lockedKeys.add(key);
@@ -166,10 +171,11 @@ public class SeatService {
                     .build();
 
         } catch (Exception e) {
-
+            log.error("Lỗi khi holdSeats cho userId {}, message: {}", userId, e.getMessage(), e);
             // rollback Redis locks
             for (String key : lockedKeys) {
                 redisTemplate.delete(key);
+                log.debug("Rollback Redis lock key: {}", key);
             }
 
             throw e;

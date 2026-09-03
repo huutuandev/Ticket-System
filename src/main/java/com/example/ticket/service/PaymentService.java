@@ -14,6 +14,7 @@ import com.example.ticket.exception.SeatHoldExpiredException;
 import com.example.ticket.repository.PaymentRepository;
 import com.example.ticket.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
@@ -32,6 +34,7 @@ public class PaymentService {
 
     @Transactional
     public PaymentResponse createPayment(PaymentCreateRequest req, Long userId) {
+        log.info("Bắt đầu tạo payment cho userId {} với các seatIds {}", userId, req.getSeatIds());
         // Verify Redis holds exist and belong to the correct user for all seats
         for (Long seatId : req.getSeatIds()) {
             if (!seatHoldService.isHoldValidForUser(seatId, userId)) {
@@ -57,6 +60,7 @@ public class PaymentService {
                 .build();
 
         Payment savedPayment = paymentRepository.save(payment);
+        log.info("Tạo payment thành công, paymentId: {}", savedPayment.getId());
         return toResponse(savedPayment);
     }
 
@@ -65,19 +69,25 @@ public class PaymentService {
     // we can still catch the exception and successfully commit the updates to the payment status (to FAILED)
     // and release the seat hold in their own separate transactions.
     public PaymentResponse mockPay(Long paymentId, MockResult result) {
+        log.info("Bắt đầu mockPay cho paymentId {}, result = {}", paymentId, result);
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
 
+        log.debug("Trạng thái payment hiện tại: {}", payment.getStatus());
         if (payment.getStatus() != PaymentStatus.PENDING) {
+            log.warn("Payment {} có trạng thái không hợp lệ: {}", paymentId, payment.getStatus());
             throw new InvalidPaymentStateException("Payment status is not PENDING. Current: " + payment.getStatus());
         }
 
         if (result == MockResult.SUCCESS) {
             try {
+                log.info("Thực hiện confirm booking cho payment {} (userId: {}, seats: {})", paymentId, payment.getUserId(), payment.getSeatIds());
                 ConfirmBookingRequest confirmReq = new ConfirmBookingRequest(payment.getSeatIds());
                 bookingService.confirmBooking(confirmReq, payment.getUserId());
                 payment.setStatus(PaymentStatus.SUCCESS);
+                log.info("Payment {} chuyển sang trạng thái SUCCESS", paymentId);
             } catch (Exception e) {
+                log.error("Confirm booking thất bại cho payment {}: {}", paymentId, e.getMessage(), e);
                 payment.setStatus(PaymentStatus.FAILED);
                 seatHoldService.releaseHolds(payment.getSeatIds());
                 paymentRepository.save(payment);
@@ -86,6 +96,7 @@ public class PaymentService {
         } else if (result == MockResult.FAILED) {
             payment.setStatus(PaymentStatus.FAILED);
             seatHoldService.releaseHolds(payment.getSeatIds());
+            log.info("Payment {} chuyển sang trạng thái FAILED do mock failed", paymentId);
         }
 
         Payment savedPayment = paymentRepository.save(payment);

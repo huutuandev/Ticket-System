@@ -4,6 +4,7 @@ import com.example.ticket.entity.Seat;
 import com.example.ticket.enums.SeatStatus;
 import com.example.ticket.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SeatHoldService {
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -30,7 +32,8 @@ public class SeatHoldService {
 
     @Transactional
     public void releaseHold(String holdId) {
-        redisTemplate.delete(holdId);
+        Boolean deleted = redisTemplate.delete(holdId);
+        log.debug("Release hold (Redis delete). Key: {}, Deleted: {}", holdId, deleted);
 
         if (holdId != null && holdId.startsWith(SEAT_HOLD_KEY_PREFIX)) {
             try {
@@ -44,6 +47,7 @@ public class SeatHoldService {
                     }
                 });
             } catch (NumberFormatException e) {
+                log.warn("Invalid holdId format khi releaseHold: {}", holdId);
                 // Ignore invalid key format
             }
         }
@@ -54,7 +58,8 @@ public class SeatHoldService {
         if (seatIds == null) return;
         for (Long seatId : seatIds) {
             String holdId = SEAT_HOLD_KEY_PREFIX + seatId;
-            redisTemplate.delete(holdId);
+            Boolean deleted = redisTemplate.delete(holdId);
+            log.debug("Release hold (Redis delete). Key: {}, Deleted: {}", holdId, deleted);
             seatRepository.findById(seatId).ifPresent(seat -> {
                 if (seat.getStatus() == SeatStatus.HOLD) {
                     seat.setStatus(SeatStatus.AVAILABLE);

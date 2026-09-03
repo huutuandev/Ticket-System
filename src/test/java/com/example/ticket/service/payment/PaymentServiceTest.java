@@ -5,6 +5,7 @@ import com.example.ticket.dto.request.PaymentCreateRequest;
 import com.example.ticket.dto.response.PaymentResponse;
 import com.example.ticket.entity.Payment;
 import com.example.ticket.entity.Seat;
+import com.example.ticket.entity.User;
 import com.example.ticket.enums.MockResult;
 import com.example.ticket.enums.PaymentStatus;
 import com.example.ticket.exception.InvalidPaymentStateException;
@@ -53,6 +54,8 @@ public class PaymentServiceTest {
 
     private Payment payment;
 
+    private User user;
+
     @BeforeEach
     public void setUp() {
         payment = Payment.builder()
@@ -65,13 +68,20 @@ public class PaymentServiceTest {
                 .transactionId("tx-12345")
                 .createdAt(LocalDateTime.now())
                 .build();
+
+        user = User.builder()
+                .id(10L)
+                .email("tuan@gmail.com")
+                .fullName("Nguyễn Hữu Tuấn")
+                .status("ACTIVE")
+                .build();
     }
+
 
     @Test
     public void createPayment_success() {
         PaymentCreateRequest req = PaymentCreateRequest.builder()
                 .seatIds(List.of(100L))
-                .userId(10L)
                 .build();
 
         Seat seat = new Seat();
@@ -82,7 +92,7 @@ public class PaymentServiceTest {
         when(seatRepository.findAllById(List.of(100L))).thenReturn(List.of(seat));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        PaymentResponse response = paymentService.createPayment(req);
+        PaymentResponse response = paymentService.createPayment(req, user.getId());
 
         assertEquals("PENDING", response.getStatus());
         assertEquals(BigDecimal.valueOf(150000), response.getAmount());
@@ -94,25 +104,23 @@ public class PaymentServiceTest {
     public void createPayment_holdExpired() {
         PaymentCreateRequest req = PaymentCreateRequest.builder()
                 .seatIds(List.of(100L))
-                .userId(10L)
                 .build();
 
         when(seatHoldService.isHoldValidForUser(100L, 10L)).thenReturn(false);
 
-        assertThrows(SeatHoldExpiredException.class, () -> paymentService.createPayment(req));
+        assertThrows(SeatHoldExpiredException.class, () -> paymentService.createPayment(req, user.getId()));
     }
 
     @Test
     public void createPayment_seatNotFound() {
         PaymentCreateRequest req = PaymentCreateRequest.builder()
                 .seatIds(List.of(100L))
-                .userId(10L)
                 .build();
 
         when(seatHoldService.isHoldValidForUser(100L, 10L)).thenReturn(true);
         when(seatRepository.findAllById(List.of(100L))).thenReturn(List.of());
 
-        assertThrows(ResourceNotFoundException.class, () -> paymentService.createPayment(req));
+        assertThrows(ResourceNotFoundException.class, () -> paymentService.createPayment(req, user.getId()));
     }
 
     @Test

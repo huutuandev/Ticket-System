@@ -1,9 +1,8 @@
 package com.example.ticket.service;
 
-
-import com.example.ticket.config.RabbitMQConfig;
 import com.example.ticket.dto.request.ConfirmBookingRequest;
 import com.example.ticket.dto.request.CreateBookingRequest;
+import com.example.ticket.dto.response.BookingHistoryResponse;
 import com.example.ticket.dto.response.BookingResponse;
 import com.example.ticket.entity.Booking;
 import com.example.ticket.entity.BookingSeat;
@@ -20,9 +19,12 @@ import com.example.ticket.repository.BookingSeatRepository;
 import com.example.ticket.repository.SeatRepository;
 import com.example.ticket.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -39,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BookingService {
     private final BookingRepository bookingRepo;
     private final UserRepository userRepo;
@@ -52,7 +55,7 @@ public class BookingService {
 
     @Transactional
     public BookingResponse confirmBooking(ConfirmBookingRequest request, Long userId){
-
+        log.info("Bắt đầu confirm booking cho userId {} với các seatIds {}", userId, request.getSeatIds());
         List<Long> seatIds = request.getSeatIds();
 
         LocalDateTime now =  LocalDateTime.now();
@@ -98,9 +101,11 @@ public class BookingService {
         );
 
         redisTemplate.delete(keysToDelete);
+        log.debug("Đã xoá Redis hold keys: {}", keysToDelete);
 
         evictSeatCache(concertId);
 
+        log.info("Confirm booking thành công cho userId {}", userId);
         return response;
     }
 
@@ -221,5 +226,49 @@ public class BookingService {
                 .bookingDate(booking.getBookingDate())
                 .status(booking.getStatus().name())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BookingHistoryResponse> getBookingHistory(Long userId, String status, Pageable pageable) {
+        Page<Booking> bookings;
+
+        if (status != null && !status.trim().isEmpty()) {
+            try {
+                BookingStatus bookingStatus = BookingStatus.valueOf(status.toUpperCase());
+                bookings = bookingRepo.findByUserIdAndStatusWithDetails(userId, bookingStatus, pageable);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid status: " + status);
+            }
+        } else {
+            bookings = bookingRepo.findByUserIdWithDetails(userId, pageable);
+        }
+
+        return bookings.map(this::mapToHistoryResponse);
+    }
+
+    private BookingHistoryResponse mapToHistoryResponse(Booking booking) {
+        BookingHistoryResponse response = new BookingHistoryResponse();
+        response.setBookingId(booking.getId());
+        response.setTotalAmount(booking.getTotalAmount());
+        response.setStatus(booking.getStatus().name());
+        response.setCreatedAt(booking.getBookingDate());
+
+        if (!booking.getBookingSeats().isEmpty()) {
+            Seat firstSeat = booking.getBookingSeats().iterator().next().getSeat();
+            response.setConcertId(firstSeat.getConcert().getId());
+            response.setConcertName(firstSeat.getConcert().getName());
+            response.setShowTime(firstSeat.getConcert().getEventTime());
+            response.setPosterUrl(firstSeat.getConcert().getImageUrl());
+        }
+
+        List<BookingHistoryResponse.SeatInfo> seatInfos = booking.getBookingSeats().stream()
+                .map(bs -> new BookingHistoryResponse.SeatInfo(
+                        bs.getSeat().getRowName() + bs.getSeat().getSeatNumber(),
+                        bs.getPrice()
+                ))
+                .toList();
+
+        response.setSeats(seatInfos);
+        return response;
     }
 }

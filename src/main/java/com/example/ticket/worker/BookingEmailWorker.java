@@ -18,7 +18,7 @@ public class BookingEmailWorker {
 
     @RabbitListener(queues = RabbitMQConfig.BOOKING_QUEUE)
     public void processBookingEmail(BookingCreatedEvent event) {
-        log.info("Processing booking email for {}", event.getUserEmail());
+        log.info("Consume RabbitMQ message from queue: {}, processing email for {}", RabbitMQConfig.BOOKING_QUEUE, event.getUserEmail());
         try {
             String htmlBody = EmailTemplateBuilder.bookingConfirmedTemplate(
                     event.getUserFullName(),
@@ -30,7 +30,7 @@ public class BookingEmailWorker {
             emailService.sendHtmlEmail(event.getUserEmail(), "Xác nhận đặt vé thành công", htmlBody);
             log.info("Sent booking email to {}", event.getUserEmail());
         } catch (Exception e) {
-            log.error("Failed booking email to {}: {}", event.getUserEmail(), e.getMessage());
+            log.error("Failed booking email to {}: {}", event.getUserEmail(), e.getMessage(), e);
             throw e;
         }
     }
